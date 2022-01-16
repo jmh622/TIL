@@ -61,7 +61,7 @@ public class Order {
 > 해결 방법
 
 > `build.gradle` 에 `implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5'` 추가
-
+>
 > `Hibernate5Module` 를 스프링 빈으로 등록하여 에러 해결
 
 ```java
@@ -82,7 +82,7 @@ public List<Order> orders() {
 ```
 
 > 위 두 가지 문제를 해결하는 더 좋은 방법 : join fetch
-
+>
 > jpql의 join fetch 를 이용하는 것이 훨씬 좋다.
 
 ```java
@@ -122,4 +122,53 @@ static class SimpleOrderDto {
     }
 }
 
+```
+
+## 일대다 컬렉션 조회 최적화
+
+### join fetch + distinct(마스터 객체 중복 제거)
+
+- `Order` - `OrderItem` 관계가 일대다
+- join fetch 사용시 일대다 관계때문에 `Order` 가 중복으로 발생한다
+- jpql의 distinct를 이용해서 `Order` 의 중복을 제거해준다
+- 단점
+  - sql의 결과가 `OrderItem` 을 기준으로 나오기 때문에 `Order` 에 대해서 페이징 처리 불가
+  - 컬렉션에 대한 join fetch는 딱 하나에 대해서만 사용해야 한다
+
+```java
+public List<Order> findAllWithItem() {
+    return em.createQuery(
+        "select distinct o from Order o" +
+                " join fetch o.member m" +
+                " join fetch o.delivery d" +
+                " join fetch o.orderItems oi" +
+                " join fetch oi.item i", Order.class)
+        .getResultList();
+}
+```
+
+### hibernate.default_batch_fetch_size (또는 @BatchSize) 이용하여 쿼리 개수 최적화
+
+- 해당 설정을 하게 되면 쿼리가 조건절 IN 을 이용하여 작성된다.
+- 따라서 쿼리의 개수가 적어져 성능 최적화
+
+```yml
+# application.yml
+spring:
+  jpa:
+  properties:
+  hibernate:
+  default_batch_fetch_size: 1000
+```
+
+```java
+public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+    return em.createQuery(
+        "select o from Order o" +
+                " join fetch o.member m" +
+                " join fetch o.delivery d", Order.class)
+        .setFirstResult(offset)
+        .setMaxResults(limit)
+        .getResultList();
+}
 ```
