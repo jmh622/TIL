@@ -77,6 +77,7 @@
     - cancel : 구독 해지
 - Processor
   - Publisher와 Subscriber의 모든 기능을 가지고 있음
+  - Publicsher와 Subscriber 사이에서 데이터 중재하는 역할을 함
 
 ### 백프레셔 (Back Pressure)
 
@@ -152,7 +153,24 @@
   - 클래스명::메서드명
   - 클래스명::new
 
+### 테스트 시 유용한 메서드
+
+- do로 시작하는 메서드
+  - doOnNext : onNext가 실행 시에 호출되는 메서드
+  - doOnComplete
+  - doOnError
+  - doOnSubscribe
+  - doOnRequest
+  - doOnCancel
+  - doOnDispose
+- blocking으로 시작하는 메서드
+  - blockingFirst
+  - blockingLast
+  - blockingIterable
+  - blockingSubscribe
+
 ### References
 
 - [라인 기술블로그 - Armeria로 Reactive Streams와 놀자! – 1](https://engineering.linecorp.com/ko/blog/reactive-streams-with-armeria-1/)
 - [에디의 기술블로그](https://brunch.co.kr/@springboot/154)
+- [러닝스푼 - 리액티브 프로그래밍](https://learningspoons.com/course/detail/reactive/)
