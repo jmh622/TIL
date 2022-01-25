@@ -107,7 +107,11 @@ model 역시 repository와 마찬가지로 어떤 DB를 사용하느냐, ORM을 
 
 (추후 정리)
 
-# SOLID 원칙 중 OCP, DIP 적용하기
+# DI 적용하기
+
+ExpressJS는 기본적으로 DI 컨테이너가 아니다. 따라서 DI를 적용하려면 별도의 모듈이 필요하다.
+
+`typedi` : https://www.npmjs.com/package/typedi
 
 # References
 
