@@ -185,3 +185,124 @@ ReactDOM.render(<App />, document.getElementById('root'));
 컴포넌트는 `props`를 수정해서는 안된다.
 
 모든 리액트 컴포넌트는 자신의 `props`를 다룰 때 반드시 순수 함수처럼 동작해야 한다.
+
+# State와 생명주기
+
+이전의 Clock 컴포넌트에 state와 생명주기를 적용하면 다음과 같다.
+
+클래스 생성자에서 `props`를 부모생성자에 전달해줘야 한다.
+
+```jsx
+class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { date: new Date() };
+  }
+
+  componentDidMount() {
+    this.timerID = setInterval(() => this.tick(), 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  tick() {
+    this.setState({
+      date: new Date(),
+    });
+  }
+
+  render() {
+    return (
+      <div>
+        <h1>Hello, world!</h1>
+        <h2>It is {this.state.date.toLocaleTimeString()}.</h2>
+      </div>
+    );
+  }
+}
+
+ReactDOM.render(<Clock />, document.getElementById('root'));
+```
+
+## State
+
+컴포넌트와 관련된 일부 데이터가 시간에 따라 변경될 경우 사용.
+
+`state`와 `props`의 가장 중요한 차이점은 `props`는 부모 컴포넌트로부터 전달받고, `state`는 컴포넌트에 의해 관리된다는 것이다.
+
+컴포넌트는 `props`를 변경할 수 없지만, `state`는 변경할 수 있다.
+
+**state는 캡슐화되어 있다.**
+
+**state는 클래스 생성자 내에서 초기화해줄 수 있다.**
+
+```jsx
+class Clock extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { date: new Date() };
+  }
+}
+```
+
+**state를 직접적으로 수정하면 안된다.**
+
+```jsx
+// Wrong
+this.state.comment = 'Hello';
+
+// Correct
+this.setState({ comment: 'Hello' });
+```
+
+**state를 업데이트할 때는 `setState`를 이용해야 한다.**
+
+| state는 비동기적으로 업데이트될 수 있기 때문에 state를 수정할 때 직접 접근하지 않아야 한다.
+
+```jsx
+// Wrong
+this.setState({
+  counter: this.state.counter + this.props.increment,
+});
+
+// Correct
+this.setState((state, props) => ({
+  counter: state.counter + props.increment,
+}));
+```
+
+**`setState`는 state 전체를 덮어씌우는 것이 아니라 병합이다.**
+
+```jsx
+constructor(props) {
+  super(props);
+  this.state = {
+    posts: [],
+    comments: []
+  };
+}
+
+componentDidMount() {
+  fetchPosts().then(response => {
+    this.setState({
+      posts: response.posts
+    });
+  });
+
+  fetchComments().then(response => {
+    this.setState({
+      comments: response.comments
+    });
+  });
+}
+```
+
+병합은 얕게 이루어지기 때문에 `this.setState({comments})`는 `this.state.posts`에 영향을 주진 않지만 `this.state.comments`는 완전히 대체된다.
+
+## 생명주기
+
+`componentDidMount`는 컴포넌트가 렌더링되면 실행된다.
+
+`componentWillUnmount`는 컴포넌트가 DOM으로부터 삭제된다면 실행된다.
