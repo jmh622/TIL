@@ -70,10 +70,6 @@ Oh My Posh 홈페이지: https://ohmyposh.dev/
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zprofile
-
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
 ```
 
 ```zsh
