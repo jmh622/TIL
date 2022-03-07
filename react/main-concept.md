@@ -312,3 +312,279 @@ componentDidMount() {
 가상 돔(VDOM)은 UI의 이상적인 또는 "가상"적인 표현을 메모리에 저장하고 ReactDOM과 같은 라이브러리에 의해 "실제" DOM과 동기화하는 프로그래밍 개념이다. 이 과정을 재조정(Reconciliation)이라고 한다.
 
 자바스크립트를 통해 DOM을 업데이트하려면 변경된 부분만 업데이트하는 것이 아니라 해당하는 전체 DOM을 다 업데이트하게 된다. 따라서 비용이 많이 발생하게 된다. 이를 해결하기 위해 가상 돔의 개념이 생겨났고 가상 돔은 변경하려는 부분만 업데이트하기 때문에 적은 비용으로 최적의 성능을 낼 수 있다.
+
+# 이벤트 처리
+
+- 이벤트 명칭은 camelCase를 사용
+- jsx를 사용하여 문자열이 아닌 함수로 이벤트 핸들러 전달
+- 기본 동작을 방지하려면 무조건 `preventDefault`를 호출해야 함
+- 핸들러 내에서 `this`를 사용하려면 `Function.prototype.bind()`를 사용하여 `this`를 바인딩해주어야 함
+  - 이 외의 방법이 있긴 하지만 기본적으로 이 방법을 이용
+- 루프 등에서 이벤트 핸들러에 인자를 전달하라면 이벤트 핸들러에 추가적인 매개변수를 전달
+
+```js
+// 일반적인 예시
+class Toggle extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { isToggleOn: true };
+
+    // 콜백에서 `this`가 작동하려면 아래와 같이 바인딩 해주어야 합니다.
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick() {
+    this.setState((prevState) => ({
+      isToggleOn: !prevState.isToggleOn,
+    }));
+  }
+
+  render() {
+    return <button onClick={this.handleClick}>{this.state.isToggleOn ? 'ON' : 'OFF'}</button>;
+  }
+}
+
+ReactDOM.render(<Toggle />, document.getElementById('root'));
+```
+
+```js
+// 추가적인 매개변수 전달
+<button onClick={(e) => this.deleteRow(id, e)}>Delete Row</button>
+<button onClick={this.deleteRow.bind(this, id)}>Delete Row</button>
+```
+
+# 조건부 렌더링
+
+- 조건부 렌더링은 javascript의 조건 처리와 동일하게 동작
+  - if-else
+  - 3항 연산자
+  - 논리 연산자
+
+```js
+// if-else
+render() {
+  const isLoggedIn = this.state.isLoggedIn;
+  return (
+    <div>
+      {isLoggedIn
+        ? <LogoutButton onClick={this.handleLogoutClick} />
+        : <LoginButton onClick={this.handleLoginClick} />
+      }
+    </div>
+  );
+}
+```
+
+```js
+// 3항 연산자
+render() {
+  const isLoggedIn = this.state.isLoggedIn;
+  return (
+    <div>
+      The user is <b>{isLoggedIn ? 'currently' : 'not'}</b> logged in.
+    </div>
+  );
+}
+```
+
+```js
+// 논리 연산자
+function Mailbox(props) {
+  const unreadMessages = props.unreadMessages;
+  return (
+    <div>
+      <h1>Hello!</h1>
+      {unreadMessages.length > 0 && <h2>You have {unreadMessages.length} unread messages.</h2>}
+    </div>
+  );
+}
+
+const messages = ['React', 'Re: React', 'Re:Re: React'];
+ReactDOM.render(<Mailbox unreadMessages={messages} />, document.getElementById('root'));
+```
+
+# 오류 처리
+
+렌더링 과정에서 오류가 발생하는 경우 'Error Boundary'를 이용하여 처리할 수 있다.
+
+'Error Boundary(에러 경계)'란 하위 컴포넌트 트리의 어디에서든 자바스크립트 에러를 기록하며 깨진 컴포넌트 트리 대신 폴백 UI를 보여주는 리액트 컴포넌트이다.
+
+에러 경계는 다음과 같은 에러는 포착하지 않는다.
+
+- 이벤트 핸들러
+- 비동기적 코드
+- 서버 사이드 렌더링
+- 자식으로부터가 아닌, 에러 경계 자체에서 발생하는 에러
+
+생명주기 메서드 중 `static getDerivedStateFromError`와 `componentDidCatch`를 이용하여 컴포넌트를 구성하면 된다.
+
+- static getDerivedStateFromError
+  - 에러가 발생한 뒤에 폴백 UI를 렌더링 할 때 사용
+- componentDidCatch
+  - 에러 정보를 기록할 때 사용
+
+```js
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // 다음 렌더링에서 폴백 UI가 보이도록 상태를 업데이트 합니다.
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // 에러 리포팅 서비스에 에러를 기록할 수도 있습니다.
+    logErrorToMyService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // 폴백 UI를 커스텀하여 렌더링할 수 있습니다.
+      return <h1>Something went wrong.</h1>;
+    }
+
+    return this.props.children;
+  }
+}
+
+<ErrorBoundary>
+  <MyWidget />
+</ErrorBoundary>;
+```
+
+# 합성
+
+하나의 컴포넌트 내에서 다른 여러 컴포넌트를 사용하는 것을 합성(Composition)이라고 한다.
+
+컴포넌트의 자식 컴포넌트, 엘리먼트는 `props.children`에 담기게 된다.
+
+클래스 컴포넌트의 경우, 상속을 사용하는 권장되지 않는다.
+
+```js
+function Dialog(props) {
+  return (
+    <FancyBorder color="blue">
+      <h1 className="Dialog-title">{props.title}</h1>
+      <p className="Dialog-message">{props.message}</p>
+      {props.children}
+    </FancyBorder>
+  );
+}
+
+class SignUpDialog extends React.Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSignUp = this.handleSignUp.bind(this);
+    this.state = { login: '' };
+  }
+
+  render() {
+    return (
+      <Dialog title="Mars Exploration Program" message="How should we refer to you?">
+        <input value={this.state.login} onChange={this.handleChange} />
+        <button onClick={this.handleSignUp}>Sign Me Up!</button>
+      </Dialog>
+    );
+  }
+
+  handleChange(e) {
+    this.setState({ login: e.target.value });
+  }
+
+  handleSignUp() {
+    alert(`Welcome aboard, ${this.state.login}!`);
+  }
+}
+```
+
+# Ref
+
+`ref`는 `render` 메서드에서 생성된 DOM 노드나 리액트 엘리먼트에 접근하는 방법을 제공한다.
+
+보통 자식 엘리먼트를 수정하는 경우에는 새로운 `props`를 전달하여 자식을 다시 렌더링해야 한다.
+
+그러나 가끔 일반적이지 않은 경우에는 `ref`를 이용하여 처리한다.
+
+보통의 경우에는 `ref`를 사용하지 않고 부모 컴포넌트에서 `props` 혹은 `state`를 이용하여 처리하도록 하자.
+
+함수 컴포넌트는 인스턴스가 없기 때문에 `ref`를 사용할 수 없다.
+
+## Ref를 사용해야 할 때
+
+- 포커스, 텍스트 선택영역, 미디어의 재생을 관리할 때
+- 애니메이션을 직접적으로 실행시킬 때
+- 서드 파티 DOM 라이브러리를 리액트와 같이 사용할 때
+
+## Ref 생성
+
+`React.createRef` 메서드를 통해 생성한다.
+
+```js
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
+  }
+  render() {
+    return <div ref={this.myRef} />;
+  }
+}
+```
+
+## Ref 접근
+
+`render` 메서드 안에서 `ref`가 엘리먼트에 전달되었을 때, 그 노드를 향한 참조는 `ref`의 `current` 어트리뷰트에 담기게 된다.
+
+```js
+const node = this.myRef.current;
+```
+
+```js
+class CustomTextInput extends React.Component {
+  constructor(props) {
+    super(props);
+    // textInput DOM 엘리먼트를 저장하기 위한 ref를 생성합니다.
+    this.textInput = React.createRef();
+    this.focusTextInput = this.focusTextInput.bind(this);
+  }
+
+  focusTextInput() {
+    // DOM API를 사용하여 명시적으로 text 타입의 input 엘리먼트를 포커스합니다.
+    // 주의: 우리는 지금 DOM 노드를 얻기 위해 "current" 프로퍼티에 접근하고 있습니다.
+    this.textInput.current.focus();
+  }
+
+  render() {
+    // React에게 우리가 text 타입의 input 엘리먼트를
+    // 우리가 생성자에서 생성한 `textInput` ref와 연결하고 싶다고 이야기합니다.
+    return (
+      <div>
+        <input type="text" ref={this.textInput} />
+        <input type="button" value="Focus the text input" onClick={this.focusTextInput} />
+      </div>
+    );
+  }
+}
+```
+
+## Ref 전달하기
+
+드문 경우이지만 자식 컴포넌트의 `ref`를 사용하는 것이 아니라, 반대로 자식 컴포넌트의 `ref`를 부모에게 공개해야 할 때가 있다.
+
+`React.forwardRef` 메서드를 통하여 부모 컴포넌트에게 `ref`를 공개할 수 있다.
+
+```js
+const FancyButton = React.forwardRef((props, ref) => (
+  <button ref={ref} className="FancyButton">
+    {props.children}
+  </button>
+));
+
+// 이제 DOM 버튼으로 ref를 작접 받을 수 있습니다.
+const ref = React.createRef();
+<FancyButton ref={ref}>Click me!</FancyButton>;
+```
