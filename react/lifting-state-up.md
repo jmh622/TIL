@@ -7,17 +7,19 @@
 ## State 끌어올리기 요약
 
 1. 맨 처음에는 하나의 컴포넌트에서 자신의 state로 render를 한다.
-2. 그러다가 다른 컴포넌트가 추가되었는 데 이 컴포넌트에서 사용하는 state가 기존에 존재하던 컴포넌트의 state와 동일하다.
+2. 그러다가 다른 컴포넌트가 추가되었는데 이 컴포넌트에서 사용하는 state가 기존에 존재하던 컴포넌트의 state와 동일하다.
 3. 각 컴포넌트에서 소유한 state가 동일한 값이지만, 컴포넌트간의 state 공유가 되지 않는다.
 4. 동일한 state를 사용하기 위하여 컴포넌트들의 가장 가까운 공통의 조상(부모) 컴포넌트가 해당 state를 가지도록 변경한다.
 5. 그럼 자식 컴포넌트들(기존에 동일한 state를 가져야 했던 컴포넌트들)은 부모로부터 해당 값을 props로 전달받게 된다.
 6. 부모 컴포넌트가 동일한 값을 props로 전달하기 때문에 서로 동일한 값을 가질 수 있게 된다.
 
+> 위 설명에서 state가 동일하다고 표현하였는데 동일한 것 뿐만 아니라, 한 쪽의 값으로 다른 쪽의 값을 계산해 낼 수 있다면 state 끌어올리기 가능!
+
 ## 코드로 보기
 
 ### 최초의 컴포넌트
 
-props로 전달받은 `celsius`값에 따라 물이 끓기에 충분하지 나타내는 컴포넌트가 있다.
+props로 전달받은 `celsius`값에 따라 물이 끓기에 충분한 지 나타내는 컴포넌트가 있다.
 
 ```js
 function BoilingVerdict(props) {
@@ -63,7 +65,7 @@ class Calculator extends React.Component {
 
 이를 위하여 기존의 `Calculator` 컴포넌트 중에서 일부를 빼내어 `TemperatureInput` 컴포넌트를 새로 만들었다.
 
-이 컴포넌트는 props를 통해 `scale`을 전달 받는다. 그리고 사용자의 입력값을 통해 `temperature`를 state로 가지게 된다.
+이 컴포넌트는 props를 통해 `scale`을 전달 받는다. 그리고 사용자의 입력값을 통해 `temperature`를 state에 저장한다.
 
 ```js
 const scaleNames = {
@@ -116,7 +118,7 @@ class Calculator extends React.Component {
 
 따라서 이때 state 끌어올리기가 필요하다.
 
-동일한 값을 공유해야하는 `TemperatureInput` 컴포넌트의 가장 가까운 공통의 조상인 `Calculator` 컴포넌트에서 해당 값(온도값)을 state로 가지고 있어야 하는 것이다.
+온도값을 공유해야하는 `TemperatureInput` 컴포넌트의 가장 가까운 공통의 조상인 `Calculator` 컴포넌트에서 해당 값(온도값)을 state로 가지고 있어야 하는 것이다.
 
 ### 최종 Calculator 컴포넌트
 
@@ -158,6 +160,25 @@ class Calculator extends React.Component {
     );
   }
 }
+
+// Convert Functions
+function tryConvert(temperature, convert) {
+  const input = parseFloat(temperature);
+  if (Number.isNaN(input)) {
+    return '';
+  }
+  const output = convert(input);
+  const rounded = Math.round(output * 1000) / 1000;
+  return rounded.toString();
+}
+
+function toCelsius(fahrenheit) {
+  return ((fahrenheit - 32) * 5) / 9;
+}
+
+function toFahrenheit(celsius) {
+  return (celsius * 9) / 5 + 32;
+}
 ```
 
 ### 최종 TemperatureInput 컴포넌트
@@ -189,3 +210,7 @@ class TemperatureInput extends React.Component {
   }
 }
 ```
+
+### 최종 UI
+
+![ui](https://ko.reactjs.org/ef94afc3447d75cdc245c77efb0d63be/react-devtools-state.gif)
