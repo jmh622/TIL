@@ -295,3 +295,57 @@ function FriendListItem(props) {
 2. 각 컴포넌트에서 동일한 Custom Hook을 사용하여 state를 받더라도 각 state는 완전히 독립적이다.
 
 # 그 이외의 Hooks
+
+## useReducer
+
+`useState` 의 대체 함수이다.
+
+state를 변경하는 데에 있어, 복잡한 로직이 필요하거나 다음 state가 이전 state에 의존적인 경우에 `useReducer`를 이용하면 된다.
+
+```js
+const initialState = { count: 0 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    default:
+      throw new Error();
+  }
+}
+
+function Counter() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  return (
+    <>
+      Count: {state.count}
+      <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+      <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+    </>
+  );
+}
+```
+
+### state 변경
+
+`useRedecer` 의 첫 번째 인자로 전달되는 `reducer` 함수를 통해 state 업데이트가 가능하다.
+
+state 변경은 `useState` 와 마찬가지로 '병합'이 아닌 '대체'이다.
+
+`dispatch` 함수의 파라미터는 자유롭게 작성할 수 있으며 전달된 파라미터는 `reducer` 의 `action` 에 담겨 전달된다.
+
+## useCallback, useMemo
+
+성능과 관련된 것으로 보임.
+
+당분간은 사용할 일이 없을 듯.
+
+## useRef
+
+클래스 컴포넌트의 `createRef` 와 동일.
+
+## 그 외
+
+필요할 때 찾아보면 될 듯.
