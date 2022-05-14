@@ -546,3 +546,83 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
         .HasCheckConstraint("CK_Prices", "[Price] > [DiscountedPrice]", c => c.HasName("CK_Product_Prices"));
 }
 ```
+
+## 시퀀스
+
+### 기본적인 사용 방법
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.HasSequence<int>("OrderNumbers");
+
+    modelBuilder.Entity<Order>()
+        .Property(o => o.OrderNo)
+        .HasDefaultValueSql("NEXT VALUE FOR OrderNumbers");
+}
+```
+
+### 시퀀스 설정 구성
+
+```csharp
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.HasSequence<int>("OrderNumbers", schema: "shared")
+        .StartsAt(1000)
+        .IncrementsBy(5);
+}
+```
+
+## 지원 필드 (백업 필드, Backing Field)
+
+> 지원 필드를 사용하면 EF가 속성이 아닌 필드를 읽거나 쓸 수 있습니다. 이 기능은 클래스의 캡슐화를 사용하여 애플리케이션 코드로 데이터에 대한 액세스와 관련된 의미 체계를 제한 및/또는 향상시키는 데 사용할 때 유용할 수 있지만 이러한 제한 사항/향상된 기능을 사용하지 않고 데이터베이스에서 값을 읽고/또는 데이터베이스에 기록해야 합니다.
+
+### 기본 구성
+
+규칙에 따라 다음 필드는 지정된 속성에 대한 지원 필드로 검색된다. (우선 순위로 나열됨)
+
+- \_<camel-cased property name>
+- \_<property name>
+- m\_<camel-cased property name>
+- m\_<property name>
+
+```csharp
+public class Blog
+{
+    private string _url;
+
+    public int BlogId { get; set; }
+
+    public string Url
+    {
+        get { return _url; }
+        set { _url = value; }
+    }
+}
+```
+
+지원 필드는 모델에 포함된 속성에 대해서만 검색된다. 데이터 주석 또는 Fluent API를 사용하여 지원 필드를 구성할 수도 있다.
+
+```csharp
+public class Blog
+{
+    private string _validatedUrl;
+
+    public int BlogId { get; set; }
+
+    [BackingField(nameof(_validatedUrl))]
+    public string Url
+    {
+        get { return _validatedUrl; }
+    }
+
+    public void SetUrl(string url)
+    {
+        // put your validation code here
+
+        _validatedUrl = url;
+    }
+}
+```
+
+## 값 변환
